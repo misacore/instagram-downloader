@@ -42,15 +42,29 @@ def download_instagram_video(url, download_id):
         
         output_path = os.path.join(DOWNLOAD_FOLDER, f"{download_id}_%(title)s.%(ext)s")
         
-        # Check if cookies file exists or create from env variable
+        # Check if cookies file exists or create from hardcoded cookies
         cookie_file = None
-        if os.path.exists('cookies.txt'):
-            cookie_file = 'cookies.txt'
-        elif os.getenv('INSTAGRAM_COOKIES'):
-            # Create cookies.txt from environment variable
+        if not os.path.exists('cookies.txt'):
+            # Create cookies.txt with proper tab-separated format
+            cookies_content = """# Netscape HTTP Cookie File
+.instagram.com\tTRUE\t/\tTRUE\t1795082016\tdatr\tG2_vaD9tYtVx4SqkKJzzDf7z
+.instagram.com\tTRUE\t/\tTRUE\t1792058016\tig_did\t9BB8BF56-463E-4711-8023-82D1153067DB
+.instagram.com\tTRUE\t/\tTRUE\t1761135945\twd\t1444x810
+.instagram.com\tTRUE\t/\tTRUE\t1761135945\tdpr\t1.5625
+.instagram.com\tTRUE\t/\tTRUE\t1795090337\tmid\taO-PmQALAAGXneWYfU1Ia0VnmY6O
+.instagram.com\tTRUE\t/\tTRUE\t1792066347\tig_nrcb\t1
+.instagram.com\tTRUE\t/\tTRUE\t1795091132\tcsrftoken\tEVtrQdYv20xhB9dpQ2g1V4jLeZ7VyvuL
+.instagram.com\tTRUE\t/\tTRUE\t1768307132\tds_user_id\t8756404558
+.instagram.com\tTRUE\t/\tTRUE\t1792067114\tsessionid\t8756404558%3AUqZZ5S2dFGHSAm%3A4%3AAYhd4dwWJu8UNdgSlos_Ab827h7fZ-Mwo6TS5IPTgA
+.instagram.com\tTRUE\t/\tTRUE\t1795091123\tps_l\t1
+.instagram.com\tTRUE\t/\tTRUE\t1795091123\tps_n\t1
+.instagram.com\tTRUE\t/\tTRUE\t0\trur\t\"LDC\\0548756404558\\0541792067127:01fecd0c9e281a40218e69b8c1c8f1e9aedef7b3aa60dacc24733f4ddec6505fa34192a5\"
+"""
             with open('cookies.txt', 'w') as f:
-                f.write(os.getenv('INSTAGRAM_COOKIES'))
-            cookie_file = 'cookies.txt'
+                f.write(cookies_content)
+            print("Created cookies.txt file")
+        
+        cookie_file = 'cookies.txt' if os.path.exists('cookies.txt') else None
         
         ydl_opts = {
             'format': 'best',
