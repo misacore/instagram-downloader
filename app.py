@@ -167,6 +167,12 @@ def progress_hook(d, download_id):
 def index():
     return render_template('index.html')
 
+@app.route('/share')
+def share():
+    # دریافت URL از پارامترهای share
+    shared_url = request.args.get('url', '') or request.args.get('text', '')
+    return render_template('index.html', shared_url=shared_url)
+
 @app.route('/api/health')
 def health():
     return jsonify({'status': 'ok', 'message': 'Instagram Downloader API is running'})

@@ -20,17 +20,13 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Vazirmatn', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             padding: 20px;
@@ -43,6 +39,7 @@
             max-width: 600px;
             width: 100%;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
         }
 
         h1 {
@@ -50,6 +47,7 @@
             color: #667eea;
             margin-bottom: 10px;
             font-size: 2.5em;
+            font-weight: 700;
         }
 
         .subtitle {
@@ -230,6 +228,37 @@
                 display: none !important;
             }
         }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            font-size: 0.95em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .footer .heart {
+            color: #ff6b6b;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.1); }
+            50% { transform: scale(1); }
+        }
+
+        .footer a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.3s;
+        }
+
+        .footer a:hover {
+            border-bottom-color: white;
+        }
     </style>
 </head>
 <body>
@@ -239,7 +268,7 @@
 
         <div class="input-group">
             <label for="url">لینک پست اینستاگرام:</label>
-            <input type="text" id="url" placeholder="https://www.instagram.com/p/..." />
+            <input type="text" id="url" placeholder="https://www.instagram.com/p/..." value="{{ shared_url or '' }}" />
         </div>
 
         <button id="downloadBtn" onclick="startDownload()">
@@ -273,6 +302,10 @@
             https://www.instagram.com/p/ABC123/<br>
             https://www.instagram.com/reel/XYZ789/
         </div>
+    </div>
+
+    <div class="footer">
+        ساخته شده با <span class="heart">♥</span> توسط <a href="https://instagram-downloader-vkjv.onrender.com" target="_blank">میثم اسماعیلی</a>
     </div>
 
     <script>
