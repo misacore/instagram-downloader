@@ -124,6 +124,19 @@
             border-radius: 16px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             display: none;
+            object-fit: cover;
+        }
+
+        .thumbnail-placeholder {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            margin-bottom: 10px;
         }
 
         .thumbnail-info {
@@ -281,6 +294,7 @@
         </div>
 
         <div class="thumbnail-preview" id="thumbnailPreview">
+            <div class="thumbnail-placeholder" id="thumbnailPlaceholder">📹</div>
             <img id="thumbnailImg" src="" alt="پیش‌نمایش">
             <div class="thumbnail-info" id="thumbnailInfo">پیش‌نمایش محتوا</div>
         </div>
@@ -332,6 +346,7 @@
             const url = document.getElementById('url').value.trim();
             const preview = document.getElementById('thumbnailPreview');
             const img = document.getElementById('thumbnailImg');
+            const placeholder = document.getElementById('thumbnailPlaceholder');
             const info = document.getElementById('thumbnailInfo');
 
             if (!url || !url.includes('instagram.com')) {
@@ -342,6 +357,7 @@
             // نمایش پیش‌نمایش با placeholder
             preview.style.display = 'block';
             img.style.display = 'none';
+            placeholder.style.display = 'flex';
             info.textContent = '📸 آماده برای دانلود';
             
             const match = url.match(/\/(p|reel|tv)\/([A-Za-z0-9_-]+)/);
@@ -352,11 +368,13 @@
                 testImg.onload = function() {
                     img.src = this.src;
                     img.style.display = 'block';
+                    placeholder.style.display = 'none';
                     info.textContent = 'پیش‌نمایش محتوا';
                 };
                 testImg.onerror = function() {
-                    // اگر thumbnail لود نشد، فقط متن نمایش بده
+                    // اگر thumbnail لود نشد، placeholder رو نگه دار
                     img.style.display = 'none';
+                    placeholder.style.display = 'flex';
                     info.textContent = '✅ لینک معتبر - آماده دانلود';
                 };
                 testImg.src = `https://www.instagram.com/p/${postId}/media/?size=m`;
