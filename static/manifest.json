@@ -1,6 +1,7 @@
 {
   "name": "دانلودکن",
   "short_name": "دانلودکن",
+  "id": "/",
   "description": "دانلود ویدیو و عکس از اینستاگرام",
   "start_url": "/",
   "display": "standalone",
