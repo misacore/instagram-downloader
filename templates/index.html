@@ -69,7 +69,7 @@
             justify-content: center;
             align-items: center;
             z-index: 9999;
-            animation: fadeOut 0.5s ease-in-out 2s forwards;
+            animation: fadeOut 0.6s ease-in-out 2s forwards;
         }
 
         @keyframes fadeOut {
@@ -79,23 +79,48 @@
             }
         }
 
-        .splash-heart {
-            font-size: 80px;
-            animation: heartBeat 1.5s ease-in-out infinite;
+        .splash-logo {
+            width: 120px;
+            height: 120px;
+            padding: 20px;
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: splashZoom 0.6s ease-out, logoFloat 2s ease-in-out 0.6s infinite;
         }
 
-        @keyframes heartBeat {
-            0%, 100% { transform: scale(1); }
-            10%, 30% { transform: scale(1.2); }
-            20%, 40% { transform: scale(1.1); }
+        @keyframes splashZoom {
+            0% { 
+                transform: scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            60% { 
+                transform: scale(1.1) rotate(10deg);
+            }
+            100% { 
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
         }
 
         .splash-text {
             color: white;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 800;
             margin-top: 30px;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            animation: textSlide 0.5s ease-out 0.3s backwards;
+        }
+
+        @keyframes textSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         h1 {
@@ -358,32 +383,6 @@
             font-size: 13px;
         }
 
-        .back-to-instagram {
-            display: none;
-            margin-top: 15px;
-            text-align: center;
-        }
-
-        .back-to-instagram a {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 10px 18px;
-            background: linear-gradient(135deg, #833AB4 0%, #E1306C 50%, #F56040 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 14px;
-            font-family: 'Vazirmatn', sans-serif;
-            box-shadow: 0 2px 8px rgba(131, 58, 180, 0.25);
-            transition: all 0.2s;
-        }
-
-        .back-to-instagram a:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(131, 58, 180, 0.35);
-        }
 
         @media (max-width: 600px) {
             .container {
@@ -404,8 +403,8 @@
     </div>
 
     <div class="splash-screen" id="splashScreen">
-        <div class="splash-heart">❤️</div>
-        <div class="splash-text" style="font-size: 28px; margin-top: 30px;">دانلودکن</div>
+        <img src="/static/instalogo.png" alt="Logo" class="splash-logo">
+        <div class="splash-text">دانلودکن</div>
     </div>
 
     <div class="container">
@@ -442,10 +441,6 @@
 
         <div class="error-message" id="errorMessage"></div>
         <div class="success-message" id="successMessage"></div>
-
-        <div class="back-to-instagram" id="backToInsta">
-            <a href="#" onclick="return openInstagram()">🔙 برگشت به اینستاگرام</a>
-        </div>
     </div>
 
     <div class="footer">
@@ -491,19 +486,6 @@
 
         function dismissInstallBanner() {
             document.getElementById('installBanner').style.display = 'none';
-        }
-
-        function openInstagram() {
-            // سعی در باز کردن اپ اینستاگرام
-            const isAndroid = /Android/i.test(navigator.userAgent);
-            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-            
-            if (isAndroid || isIOS) {
-                window.location.href = 'instagram://';
-            } else {
-                window.location.href = 'https://www.instagram.com/';
-            }
-            return false;
         }
 
         async function pasteUrl() {
@@ -666,13 +648,11 @@
             const downloadLink = document.getElementById('downloadLink');
             const downloadButton = document.getElementById('downloadButton');
             const successMessage = document.getElementById('successMessage');
-            const backToInsta = document.getElementById('backToInsta');
 
             progressContainer.style.display = 'none';
             downloadLink.style.display = 'block';
             successMessage.style.display = 'block';
             successMessage.textContent = '✅ دانلود با موفقیت انجام شد!';
-            backToInsta.style.display = 'block';
 
             downloadButton.href = `/file/${filename}`;
             resetButton();
