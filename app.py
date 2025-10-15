@@ -4,6 +4,8 @@ import os
 import uuid
 import threading
 import time
+import subprocess
+import glob
 
 app = Flask(__name__)
 
@@ -56,19 +58,49 @@ def download_instagram_video(url, download_id):
             'check_certificate': False,
         }
         
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            
-            for file in os.listdir(DOWNLOAD_FOLDER):
-                if file.startswith(download_id):
-                    download_status[download_id] = {
-                        'status': 'completed',
-                        'progress': 100,
-                        'filename': file,
-                        'error': None,
-                        'title': info.get('title', 'Instagram Video')
-                    }
-                    return
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=True)
+                
+                for file in os.listdir(DOWNLOAD_FOLDER):
+                    if file.startswith(download_id):
+                        download_status[download_id] = {
+                            'status': 'completed',
+                            'progress': 100,
+                            'filename': file,
+                            'error': None,
+                            'title': info.get('title', 'Instagram Video')
+                        }
+                        return
+        except Exception as yt_error:
+            # Fallback to gallery-dl for Instagram
+            if 'instagram.com' in url:
+                print(f"yt-dlp failed, trying gallery-dl: {yt_error}")
+                try:
+                    gallery_output = os.path.join(DOWNLOAD_FOLDER, download_id)
+                    result = subprocess.run(
+                        ['gallery-dl', '--dest', DOWNLOAD_FOLDER, '--filename', f'{download_id}_{{filename}}.{{extension}}', url],
+                        capture_output=True,
+                        text=True,
+                        timeout=300
+                    )
+                    
+                    if result.returncode == 0:
+                        for file in os.listdir(DOWNLOAD_FOLDER):
+                            if file.startswith(download_id):
+                                download_status[download_id] = {
+                                    'status': 'completed',
+                                    'progress': 100,
+                                    'filename': file,
+                                    'error': None,
+                                    'title': 'Instagram Media'
+                                }
+                                return
+                    raise Exception(f"gallery-dl failed: {result.stderr}")
+                except Exception as gallery_error:
+                    raise Exception(f"Both yt-dlp and gallery-dl failed. yt-dlp: {yt_error}, gallery-dl: {gallery_error}")
+            else:
+                raise yt_error
         
         download_status[download_id]['status'] = 'error'
         download_status[download_id]['error'] = 'File not found'
