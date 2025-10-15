@@ -1,6 +1,6 @@
 {
-  "name": "دانلودر اینستاگرام",
-  "short_name": "Insta DL",
+  "name": "دانلودکن",
+  "short_name": "دانلودکن",
   "description": "دانلود ویدیو و عکس از اینستاگرام",
   "start_url": "/",
   "display": "standalone",
