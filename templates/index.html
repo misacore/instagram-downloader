@@ -359,26 +359,30 @@
         }
 
         .back-to-instagram {
+            display: none;
             margin-top: 15px;
             text-align: center;
         }
 
         .back-to-instagram a {
-            display: inline-block;
-            padding: 12px 24px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
             background: linear-gradient(135deg, #833AB4 0%, #E1306C 50%, #F56040 100%);
             color: white;
             text-decoration: none;
             border-radius: 12px;
-            font-weight: 700;
+            font-weight: 600;
+            font-size: 14px;
             font-family: 'Vazirmatn', sans-serif;
-            box-shadow: 0 4px 12px rgba(131, 58, 180, 0.3);
+            box-shadow: 0 2px 8px rgba(131, 58, 180, 0.25);
             transition: all 0.2s;
         }
 
         .back-to-instagram a:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(131, 58, 180, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(131, 58, 180, 0.35);
         }
 
         @media (max-width: 600px) {
@@ -401,7 +405,7 @@
 
     <div class="splash-screen" id="splashScreen">
         <div class="splash-heart">❤️</div>
-        <div class="splash-text" style="font-size: 20px; margin-top: 30px;">تقدیم به مادرم زیبایم</div>
+        <div class="splash-text" style="font-size: 28px; margin-top: 30px;">دانلودکن</div>
     </div>
 
     <div class="container">
@@ -440,17 +444,26 @@
         <div class="success-message" id="successMessage"></div>
 
         <div class="back-to-instagram" id="backToInsta">
-            <a href="instagram://" onclick="return openInstagram()">🔙 برگشت به اینستاگرام</a>
+            <a href="#" onclick="return openInstagram()">🔙 برگشت به اینستاگرام</a>
         </div>
     </div>
 
     <div class="footer">
-        ساخته شده با <span class="heart">♥</span> توسط <a href="https://instagram-downloader-vkjv.onrender.com" target="_blank">میثم اسماعیلی</a>
+        ساخته شده با <span class="heart">♥</span> توسط <a href="https://instagram-downloader-vkjv.onrender.com" target="_blank">میثم اسماعیلی</a> • تقدیم به مادر زیبایم
     </div>
 
     <script>
         let checkInterval;
         let deferredPrompt;
+
+        // نمایش splash فقط اولین بار
+        if (!localStorage.getItem('visited')) {
+            // اولین بازدید
+            localStorage.setItem('visited', 'true');
+        } else {
+            // قبلاً بازدید کرده - splash رو مخفی کن
+            document.getElementById('splashScreen').style.display = 'none';
+        }
 
         // نمایش بنر نصب برای موبایل
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -481,10 +494,15 @@
         }
 
         function openInstagram() {
-            window.location.href = 'instagram://';
-            setTimeout(() => {
+            // سعی در باز کردن اپ اینستاگرام
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            
+            if (isAndroid || isIOS) {
+                window.location.href = 'instagram://';
+            } else {
                 window.location.href = 'https://www.instagram.com/';
-            }, 500);
+            }
             return false;
         }
 
@@ -648,11 +666,13 @@
             const downloadLink = document.getElementById('downloadLink');
             const downloadButton = document.getElementById('downloadButton');
             const successMessage = document.getElementById('successMessage');
+            const backToInsta = document.getElementById('backToInsta');
 
             progressContainer.style.display = 'none';
             downloadLink.style.display = 'block';
             successMessage.style.display = 'block';
             successMessage.textContent = '✅ دانلود با موفقیت انجام شد!';
+            backToInsta.style.display = 'block';
 
             downloadButton.href = `/file/${filename}`;
             resetButton();
