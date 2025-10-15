@@ -110,22 +110,30 @@
             display: none;
             margin: 20px 0;
             text-align: center;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .thumbnail-preview img {
             max-width: 100%;
-            max-height: 300px;
+            max-height: 250px;
             border-radius: 16px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: none;
         }
 
         .thumbnail-info {
             margin-top: 10px;
-            padding: 10px;
-            background: #f8f8f8;
+            padding: 12px;
+            background: linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%);
             border-radius: 12px;
-            font-size: 13px;
+            font-size: 14px;
             color: #666;
+            font-weight: 600;
         }
 
         .btn-download {
@@ -324,27 +332,43 @@
             const url = document.getElementById('url').value.trim();
             const preview = document.getElementById('thumbnailPreview');
             const img = document.getElementById('thumbnailImg');
+            const info = document.getElementById('thumbnailInfo');
 
             if (!url || !url.includes('instagram.com')) {
                 preview.style.display = 'none';
                 return;
             }
 
+            // نمایش پیش‌نمایش با placeholder
+            preview.style.display = 'block';
+            img.style.display = 'none';
+            info.textContent = '📸 آماده برای دانلود';
+            
             const match = url.match(/\/(p|reel|tv)\/([A-Za-z0-9_-]+)/);
             if (match) {
                 const postId = match[2];
-                img.src = `https://www.instagram.com/p/${postId}/media/?size=l`;
-                preview.style.display = 'block';
-                
-                img.onerror = () => {
-                    preview.style.display = 'none';
+                // تلاش برای نمایش thumbnail
+                const testImg = new Image();
+                testImg.onload = function() {
+                    img.src = this.src;
+                    img.style.display = 'block';
+                    info.textContent = 'پیش‌نمایش محتوا';
                 };
+                testImg.onerror = function() {
+                    // اگر thumbnail لود نشد، فقط متن نمایش بده
+                    img.style.display = 'none';
+                    info.textContent = '✅ لینک معتبر - آماده دانلود';
+                };
+                testImg.src = `https://www.instagram.com/p/${postId}/media/?size=m`;
             }
         }
 
         document.getElementById('url').addEventListener('input', function() {
-            if (this.value.includes('instagram.com')) {
-                setTimeout(previewMedia, 500);
+            const url = this.value.trim();
+            if (url.includes('instagram.com')) {
+                previewMedia();
+            } else if (url === '') {
+                document.getElementById('thumbnailPreview').style.display = 'none';
             }
         });
 
