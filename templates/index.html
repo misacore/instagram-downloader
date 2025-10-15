@@ -373,22 +373,42 @@
             
             const match = url.match(/\/(p|reel|tv)\/([A-Za-z0-9_-]+)/);
             if (match) {
-                const postId = match[2];
-                // تلاش برای نمایش thumbnail
-                const testImg = new Image();
-                testImg.onload = function() {
-                    img.src = this.src;
-                    img.style.display = 'block';
-                    placeholder.style.display = 'none';
-                    info.textContent = 'پیش‌نمایش محتوا';
-                };
-                testImg.onerror = function() {
-                    // اگر thumbnail لود نشد، placeholder رو نگه دار
+                // دریافت thumbnail از سرور
+                fetch('/thumbnail', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.thumbnail) {
+                        const testImg = new Image();
+                        testImg.onload = function() {
+                            img.src = this.src;
+                            img.style.display = 'block';
+                            placeholder.style.display = 'none';
+                            info.textContent = data.title || 'پیش‌نمایش محتوا';
+                        };
+                        testImg.onerror = function() {
+                            // اگر thumbnail لود نشد
+                            img.style.display = 'none';
+                            placeholder.style.display = 'flex';
+                            info.textContent = '✅ لینک معتبر - آماده دانلود';
+                        };
+                        testImg.src = data.thumbnail;
+                    } else {
+                        // اگر thumbnail پیدا نشد
+                        img.style.display = 'none';
+                        placeholder.style.display = 'flex';
+                        info.textContent = '✅ لینک معتبر - آماده دانلود';
+                    }
+                })
+                .catch(error => {
+                    // در صورت خطا، فقط placeholder نمایش بده
                     img.style.display = 'none';
                     placeholder.style.display = 'flex';
                     info.textContent = '✅ لینک معتبر - آماده دانلود';
-                };
-                testImg.src = `https://www.instagram.com/p/${postId}/media/?size=m`;
+                });
             }
         }
 

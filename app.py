@@ -173,6 +173,44 @@ def share():
     shared_url = request.args.get('url', '') or request.args.get('text', '')
     return render_template('index.html', shared_url=shared_url)
 
+@app.route('/thumbnail', methods=['POST'])
+def get_thumbnail():
+    try:
+        data = request.get_json()
+        url = data.get('url', '').strip()
+        
+        if not url or 'instagram.com' not in url:
+            return jsonify({'error': 'Invalid URL'}), 400
+        
+        # استخراج اطلاعات با yt-dlp
+        ydl_opts = {
+            'quiet': True,
+            'skip_download': True,
+            'no_warnings': True,
+            'extractor_args': {
+                'generic': {
+                    'impersonate': ['chrome']
+                }
+            },
+        }
+        
+        # بررسی وجود کوکی
+        if os.path.exists('cookies.txt'):
+            ydl_opts['cookiefile'] = 'cookies.txt'
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            
+            thumbnail = info.get('thumbnail')
+            title = info.get('title', 'Instagram Media')
+            
+            return jsonify({
+                'thumbnail': thumbnail,
+                'title': title
+            })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/health')
 def health():
     return jsonify({'status': 'ok', 'message': 'Instagram Downloader API is running'})
