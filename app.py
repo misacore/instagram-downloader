@@ -42,6 +42,16 @@ def download_instagram_video(url, download_id):
         
         output_path = os.path.join(DOWNLOAD_FOLDER, f"{download_id}_%(title)s.%(ext)s")
         
+        # Check if cookies file exists or create from env variable
+        cookie_file = None
+        if os.path.exists('cookies.txt'):
+            cookie_file = 'cookies.txt'
+        elif os.getenv('INSTAGRAM_COOKIES'):
+            # Create cookies.txt from environment variable
+            with open('cookies.txt', 'w') as f:
+                f.write(os.getenv('INSTAGRAM_COOKIES'))
+            cookie_file = 'cookies.txt'
+        
         ydl_opts = {
             'format': 'best',
             'outtmpl': output_path,
@@ -57,6 +67,11 @@ def download_instagram_video(url, download_id):
             'geo_bypass': True,
             'check_certificate': False,
         }
+        
+        # Add cookies if available
+        if cookie_file:
+            ydl_opts['cookiefile'] = cookie_file
+            print(f"Using cookies from {cookie_file}")
         
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -78,8 +93,18 @@ def download_instagram_video(url, download_id):
                 print(f"yt-dlp failed, trying gallery-dl: {yt_error}")
                 try:
                     gallery_output = os.path.join(DOWNLOAD_FOLDER, download_id)
+                    # Build gallery-dl command
+                    cmd = ['gallery-dl', '--dest', DOWNLOAD_FOLDER, '--filename', f'{download_id}_{{filename}}.{{extension}}']
+                    
+                    # Add cookies if available
+                    if os.path.exists('cookies.txt'):
+                        cmd.extend(['--cookies', 'cookies.txt'])
+                        print("Using cookies for gallery-dl")
+                    
+                    cmd.append(url)
+                    
                     result = subprocess.run(
-                        ['gallery-dl', '--dest', DOWNLOAD_FOLDER, '--filename', f'{download_id}_{{filename}}.{{extension}}', url],
+                        cmd,
                         capture_output=True,
                         text=True,
                         timeout=300
