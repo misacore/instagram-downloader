@@ -8,7 +8,8 @@
     <meta name="description" content="دانلود ویدیو و عکس از اینستاگرام">
     <meta name="theme-color" content="#E100FF">
     <link rel="manifest" href="/static/manifest.json">
-    <link rel="icon" type="image/png" href="/static/icon-192.png">
+    <link rel="icon" type="image/png" href="/static/instalogo.png">
+    <link rel="apple-touch-icon" href="/static/instalogo.png">
     
     <style>
         @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
@@ -37,6 +38,15 @@
             max-width: 500px;
             width: 100%;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            display: block;
+            border-radius: 20px;
+            box-shadow: 0 4px 16px rgba(225, 0, 255, 0.2);
         }
 
         h1 {
@@ -284,7 +294,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>📸 دانلودر اینستاگرام</h1>
+        <img src="/static/instalogo.png" alt="Logo" class="logo">
+        <h1>دانلودر اینستاگرام</h1>
         <p class="subtitle">ویدیو و عکس اینستاگرام را با یک کلیک دانلود کنید</p>
 
         <div class="input-wrapper">
