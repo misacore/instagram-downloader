@@ -79,19 +79,15 @@
             }
         }
 
-        .splash-logo {
-            width: 120px;
-            height: 120px;
-            padding: 20px;
-            background: white;
-            border-radius: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            animation: splashPulse 1.5s ease-in-out infinite;
+        .splash-heart {
+            font-size: 80px;
+            animation: heartBeat 1.5s ease-in-out infinite;
         }
 
-        @keyframes splashPulse {
+        @keyframes heartBeat {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            10%, 30% { transform: scale(1.2); }
+            20%, 40% { transform: scale(1.1); }
         }
 
         .splash-text {
@@ -405,8 +401,8 @@
     </div>
 
     <div class="splash-screen" id="splashScreen">
-        <img src="/static/instalogo.png" alt="Logo" class="splash-logo">
-        <div class="splash-text">دانلودکن</div>
+        <div class="splash-heart">❤️</div>
+        <div class="splash-text" style="font-size: 20px; margin-top: 30px;">تقدیم به مادرم زیبایم</div>
     </div>
 
     <div class="container">
