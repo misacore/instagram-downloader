@@ -21,83 +21,121 @@
     <link rel="apple-touch-icon" href="/static/icon-192.png">
     <style>
         @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Vazirmatn', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #E100FF 0%, #7F00FF 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 16px;
         }
 
         .container {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 600px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-        }
-
-        h1 {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            padding: 32px 24px;
+            max-width:         h1 {
             text-align: center;
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 2.5em;
-            font-weight: 700;
+            background: linear-gradient(135deg, #E100FF, #7F00FF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            font-size: 2em;
+            font-weight: 800;
         }
 
         .subtitle {
             text-align: center;
             color: #666;
-            margin-bottom: 30px;
-            font-size: 0.9em;
+            margin-bottom: 32px;
+            font-size: 0.85em;
+            font-weight: 500;
         }
 
         .input-group {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 600;
+            display: none;
+        }
+
+        .url-container {
+            position: relative;
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
         }
 
         input[type="text"] {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s;
+            flex: 1;
+            padding: 14px 44px 14px 16px;
+            border: 2px solid #f0f0f0;
+            border-radius: 16px;
+            font-size: 15px;
+            transition: all 0.2s;
+            background: #fafafa;
         }
 
         input[type="text"]:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #E100FF;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(225, 0, 255, 0.08);
+        }
+
+        .clear-btn, .paste-btn {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            color: #999;
+            font-size: 18px;
+            transition: all 0.2s;
+            width: auto;
+        }
+
+        .paste-btn {
+            left: auto;
+            right: 12px;
+        }
+
+        .clear-btn:hover, .paste-btn:hover {
+            color: #E100FF;
+            transform: translateY(-50%) scale(1.1);
         }
 
         button {
             width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 16px;
+            background: linear-gradient(135deg, #E100FF 0%, #7F00FF 100%);
             color: white;
             border: none;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: 600;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.2s;
+            box-shadow: 0 4px 16px rgba(225, 0, 255, 0.3);
         }
 
         button:hover {
             transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(225, 0, 255, 0.4);
         }
 
         button:active {
@@ -107,96 +145,105 @@
         button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+            transform: none;
+        }
+
+        .thumbnail-preview {
+            display: none;
+            margin: 16px 0;
+            text-align: center;
+        }
+
+        .thumbnail-preview img {
+            max-width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .thumbnail-info {
+            margin-top: 12px;
+            padding: 12px;
+            background: #f8f8f8;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #666;
         }
 
         .progress-container {
             display: none;
-            margin-top: 30px;
+            margin-top: 24px;
         }
 
         .progress-bar {
             width: 100%;
-            height: 30px;
-            background: #e0e0e0;
-            border-radius: 15px;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 8px;
             overflow: hidden;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(90deg, #E100FF 0%, #7F00FF 100%);
             width: 0%;
             transition: width 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
         }
 
         .status-message {
             text-align: center;
             color: #666;
-            margin-top: 10px;
+            margin-top: 8px;
+            font-size: 14px;
         }
 
         .download-link {
             display: none;
-            margin-top: 20px;
+            margin-top: 16px;
             text-align: center;
         }
 
         .download-button {
             display: inline-block;
-            padding: 12px 30px;
-            background: #4CAF50;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #00D084 0%, #00A868 100%);
             color: white;
             text-decoration: none;
-            border-radius: 10px;
-            font-weight: 600;
-            transition: all 0.3s;
+            border-radius: 16px;
+            font-weight: 700;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 208, 132, 0.3);
         }
 
         .download-button:hover {
-            background: #45a049;
             transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 208, 132, 0.4);
         }
 
         .error-message {
             display: none;
-            background: #ffebee;
-            color: #c62828;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
+            background: #ffe0e0;
+            color: #d32f2f;
+            padding: 14px;
+            border-radius: 12px;
+            margin-top: 16px;
             text-align: center;
+            font-size: 14px;
         }
 
         .success-message {
             display: none;
-            background: #e8f5e9;
-            color: #2e7d32;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
+            background: #e0f7e9;
+            color: #00A868;
+            padding: 14px;
+            border-radius: 12px;
+            margin-top: 16px;
             text-align: center;
+            font-size: 14px;
         }
 
         .example {
-            background: #f5f5f5;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-            font-size: 0.9em;
-        }
-
-        .example strong {
-            color: #667eea;
-        }
-
-        .emoji {
-            font-size: 1.2em;
+            display: none;
         }
 
         .install-container {
@@ -231,33 +278,33 @@
 
         .footer {
             text-align: center;
-            color: white;
-            margin-top: 30px;
-            font-size: 0.95em;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 24px;
+            font-size: 13px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
 
         .footer .heart {
-            color: #ff6b6b;
+            color: #ff6b9d;
             animation: heartbeat 1.5s ease-in-out infinite;
+            display: inline-block;
         }
 
         @keyframes heartbeat {
             0%, 100% { transform: scale(1); }
-            25% { transform: scale(1.1); }
+            25% { transform: scale(1.15); }
             50% { transform: scale(1); }
         }
 
         .footer a {
             color: white;
             text-decoration: none;
-            font-weight: 600;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.5);
-            transition: all 0.3s;
+            font-weight: 700;
+            transition: all 0.2s;
         }
 
         .footer a:hover {
-            border-bottom-color: white;
+            text-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
         }
     </style>
 </head>
@@ -267,12 +314,20 @@
         <p class="subtitle">ویدیو و عکس اینستاگرام را با یک کلیک دانلود کنید</p>
 
         <div class="input-group">
-            <label for="url">لینک پست اینستاگرام:</label>
-            <input type="text" id="url" placeholder="https://www.instagram.com/p/..." value="{{ shared_url or '' }}" />
+            <div class="url-container">
+                <input type="text" id="url" placeholder="لینک اینستاگرام را وارد کنید..." value="{{ shared_url or '' }}" />
+                <button class="clear-btn" onclick="clearUrl()" title="پاک کردن">×</button>
+                <button class="paste-btn" onclick="pasteUrl()" title="چسباندن">📋</button>
+            </div>
+        </div>
+
+        <div class="thumbnail-preview" id="thumbnailPreview">
+            <img id="thumbnailImg" src="" alt="Preview">
+            <div class="thumbnail-info" id="thumbnailInfo"></div>
         </div>
 
         <button id="downloadBtn" onclick="startDownload()">
-            <span class="emoji">⬇️</span> دانلود
+            دانلود
         </button>
 
         <div class="progress-container" id="progressContainer">
@@ -353,6 +408,63 @@
         });
 
         let checkInterval;
+
+        // Paste from clipboard
+        async function pasteUrl() {
+            try {
+                const text = await navigator.clipboard.readText();
+                document.getElementById('url').value = text;
+                // Auto preview if it's an Instagram link
+                if (text.includes('instagram.com')) {
+                    previewMedia();
+                }
+            } catch (err) {
+                console.error('Failed to read clipboard:', err);
+                alert('برای استفاده از این قابلیت، دسترسی به کلیپبورد لازم است');
+            }
+        }
+
+        // Clear URL input
+        function clearUrl() {
+            document.getElementById('url').value = '';
+            document.getElementById('thumbnailPreview').style.display = 'none';
+        }
+
+        // Preview media before download
+        function previewMedia() {
+            const url = document.getElementById('url').value.trim();
+            const thumbnailPreview = document.getElementById('thumbnailPreview');
+            const thumbnailImg = document.getElementById('thumbnailImg');
+            const thumbnailInfo = document.getElementById('thumbnailInfo');
+
+            if (!url || !url.includes('instagram.com')) {
+                thumbnailPreview.style.display = 'none';
+                return;
+            }
+
+            // Extract post ID from URL
+            const match = url.match(/\/(p|reel|tv)\/([A-Za-z0-9_-]+)/);
+            if (match) {
+                const postId = match[2];
+                // Use Instagram's embed API for thumbnail
+                thumbnailImg.src = `https://www.instagram.com/p/${postId}/media/?size=m`;
+                thumbnailInfo.textContent = 'پیش‌نمایش محتوا';
+                thumbnailPreview.style.display = 'block';
+                
+                // Handle image load error
+                thumbnailImg.onerror = () => {
+                    thumbnailPreview.style.display = 'none';
+                };
+            }
+        }
+
+        // Auto preview on input change
+        document.getElementById('url').addEventListener('input', function() {
+            const url = this.value.trim();
+            if (url.includes('instagram.com')) {
+                previewMedia();
+            }
+        });
 
         function startDownload() {
             const url = document.getElementById('url').value.trim();
