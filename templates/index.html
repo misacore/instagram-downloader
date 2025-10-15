@@ -359,7 +359,6 @@
         }
 
         .back-to-instagram {
-            display: none;
             margin-top: 15px;
             text-align: center;
         }
@@ -452,11 +451,6 @@
     <script>
         let checkInterval;
         let deferredPrompt;
-
-        // چک کردن اینکه ایا از اینستاگرام اومده
-        if (document.referrer.includes('instagram.com') || window.location.search.includes('url=')) {
-            document.getElementById('backToInsta').style.display = 'block';
-        }
 
         // نمایش بنر نصب برای موبایل
         window.addEventListener('beforeinstallprompt', (e) => {
