@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دانلودر اینستاگرام</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="دانلود ویدیو و عکس از اینستاگرام">
+    <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Insta DL">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .status-message {
+            text-align: center;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .download-link {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .download-button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .download-button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            display: none;
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .success-message {
+            display: none;
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .example {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+
+        .example strong {
+            color: #667eea;
+        }
+
+        .emoji {
+            font-size: 1.2em;
+        }
+
+        .install-container {
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .install-button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .install-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        @media (display-mode: standalone) {
+            .install-container {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><span class="emoji">📸</span> دانلودر اینستاگرام</h1>
+        <p class="subtitle">ویدیو و عکس اینستاگرام را با یک کلیک دانلود کنید</p>
+
+        <div class="input-group">
+            <label for="url">لینک پست اینستاگرام:</label>
+            <input type="text" id="url" placeholder="https://www.instagram.com/p/..." />
+        </div>
+
+        <button id="downloadBtn" onclick="startDownload()">
+            <span class="emoji">⬇️</span> دانلود
+        </button>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">0%</div>
+            </div>
+            <div class="status-message" id="statusMessage">در حال دانلود...</div>
+        </div>
+
+        <div class="download-link" id="downloadLink">
+            <a href="#" class="download-button" id="downloadButton" download>
+                <span class="emoji">💾</span> دانلود فایل
+            </a>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+
+        <div class="install-container" id="installContainer">
+            <button class="install-button" id="installButton">
+                <span class="emoji">📥</span> نصب اپلیکیشن
+            </button>
+        </div>
+
+        <div class="example">
+            <strong>نمونه لینک:</strong><br>
+            https://www.instagram.com/p/ABC123/<br>
+            https://www.instagram.com/reel/XYZ789/
+        </div>
+    </div>
+
+    <script>
+        // PWA Installation
+        let deferredPrompt;
+        const installButton = document.getElementById('installButton');
+        const installContainer = document.getElementById('installContainer');
+
+        // ثبت Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('SW registered:', registration);
+                    })
+                    .catch(error => {
+                        console.log('SW registration failed:', error);
+                    });
+            });
+        }
+
+        // رویداد نصب PWA
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installContainer.style.display = 'block';
+        });
+
+        installButton.addEventListener('click', async () => {
+            if (!deferredPrompt) {
+                return;
+            }
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response: ${outcome}`);
+            deferredPrompt = null;
+            installContainer.style.display = 'none';
+        });
+
+        // بعد از نصب
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA installed');
+            deferredPrompt = null;
+            installContainer.style.display = 'none';
+        });
+
+        let checkInterval;
+
+        function startDownload() {
+            const url = document.getElementById('url').value.trim();
+            const downloadBtn = document.getElementById('downloadBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const downloadLink = document.getElementById('downloadLink');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+
+            // پاک کردن پیام‌های قبلی
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            downloadLink.style.display = 'none';
+            progressContainer.style.display = 'none';
+
+            if (!url) {
+                showError('لطفاً لینک اینستاگرام را وارد کنید');
+                return;
+            }
+
+            if (!url.includes('instagram.com')) {
+                showError('لطفاً یک لینک معتبر اینستاگرام وارد کنید');
+                return;
+            }
+
+            // غیرفعال کردن دکمه
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = '⏳ در حال پردازش...';
+
+            // نمایش نوار پیشرفت
+            progressContainer.style.display = 'block';
+
+            // ارسال درخواست دانلود
+            fetch('/download', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url: url })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showError(data.error);
+                    resetButton();
+                } else {
+                    // شروع چک کردن وضعیت
+                    checkStatus(data.download_id);
+                }
+            })
+            .catch(error => {
+                showError('خطا در ارتباط با سرور: ' + error);
+                resetButton();
+            });
+        }
+
+        function checkStatus(downloadId) {
+            checkInterval = setInterval(() => {
+                fetch(`/status/${downloadId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'downloading') {
+                            updateProgress(data.progress);
+                        } else if (data.status === 'completed') {
+                            clearInterval(checkInterval);
+                            showSuccess(data.filename, data.title);
+                        } else if (data.status === 'error') {
+                            clearInterval(checkInterval);
+                            showError('خطا در دانلود: ' + data.error);
+                            resetButton();
+                        }
+                    })
+                    .catch(error => {
+                        clearInterval(checkInterval);
+                        showError('خطا در بررسی وضعیت: ' + error);
+                        resetButton();
+                    });
+            }, 1000);
+        }
+
+        function updateProgress(progress) {
+            const progressFill = document.getElementById('progressFill');
+            progressFill.style.width = progress + '%';
+            progressFill.textContent = progress + '%';
+        }
+
+        function showSuccess(filename, title) {
+            const downloadLink = document.getElementById('downloadLink');
+            const downloadButton = document.getElementById('downloadButton');
+            const progressContainer = document.getElementById('progressContainer');
+            const successMessage = document.getElementById('successMessage');
+
+            progressContainer.style.display = 'none';
+            downloadLink.style.display = 'block';
+            successMessage.style.display = 'block';
+            successMessage.textContent = '✅ دانلود با موفقیت انجام شد!';
+
+            downloadButton.href = `/file/${filename}`;
+            resetButton();
+        }
+
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = '❌ ' + message;
+            errorMessage.style.display = 'block';
+            
+            const progressContainer = document.getElementById('progressContainer');
+            progressContainer.style.display = 'none';
+        }
+
+        function resetButton() {
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.disabled = false;
+            downloadBtn.innerHTML = '<span class="emoji">⬇️</span> دانلود';
+        }
+
+        // اجازه دانلود با فشردن Enter
+        document.getElementById('url').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                startDownload();
+            }
+        });
+    </script>
+</body>
+</html>
