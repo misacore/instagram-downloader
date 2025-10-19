@@ -475,15 +475,42 @@
             document.getElementById('splashScreen').style.display = 'none';
         }
 
+        // بررسی نصب بودن اپ
+        function checkIfInstalled() {
+            // اگه به صورت standalone اجرا شده، اپ نصب شده
+            if (window.matchMedia('(display-mode: standalone)').matches || 
+                window.navigator.standalone === true) {
+                return true;
+            }
+            return false;
+        }
+
         // نمایش بنر نصب برای موبایل
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
             
-            // فقط روی موبایل نمایش بده
-            if (/Mobi|Android/i.test(navigator.userAgent)) {
-                document.getElementById('installBanner').style.display = 'block';
+            // فقط روی موبایل و اگه نصب نشده نمایش بده
+            if (/Mobi|Android/i.test(navigator.userAgent) && !checkIfInstalled()) {
+                // اگه کاربر قبلاً dismiss نکرده
+                if (!localStorage.getItem('installBannerDismissed')) {
+                    document.getElementById('installBanner').style.display = 'block';
+                }
             }
+        });
+
+        // نمایش بنر حتی اگه beforeinstallprompt trigger نشد
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (/Mobi|Android/i.test(navigator.userAgent) && 
+                    !checkIfInstalled() && 
+                    !localStorage.getItem('installBannerDismissed')) {
+                    // اگه بنر هنوز نمایش داده نشده
+                    if (document.getElementById('installBanner').style.display !== 'block') {
+                        document.getElementById('installBanner').style.display = 'block';
+                    }
+                }
+            }, 2000); // 2 ثانیه بعد از لود
         });
 
         function installApp() {
@@ -496,11 +523,16 @@
                     document.getElementById('installBanner').style.display = 'none';
                     deferredPrompt = null;
                 });
+            } else {
+                // اگه prompt در دسترس نیست، راهنمایی بده
+                alert('برای نصب اپ:\n\n📱 اندروید: منوی مرورگر > افزودن به صفحه اصلی\n🍎 iOS: دکمه Share > Add to Home Screen');
             }
         }
 
         function dismissInstallBanner() {
             document.getElementById('installBanner').style.display = 'none';
+            // ذخیره اطلاعات dismiss برای جلوگیری از نمایش مجدد
+            localStorage.setItem('installBannerDismissed', 'true');
         }
 
         async function pasteUrl() {
