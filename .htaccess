@@ -1,0 +1,7 @@
+PassengerEnabled On
+PassengerAppRoot /home/fastbac1/instagram-downloader
+PassengerBaseURI /app
+PassengerAppType wsgi
+PassengerStartupFile passenger_wsgi.py
+PassengerPython /home/fastbac1/virtualenv/instagram-downloader/3.12/bin/python
+PassengerAppEnv production

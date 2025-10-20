@@ -167,6 +167,10 @@ def progress_hook(d, download_id):
 def index():
     return render_template('index.html')
 
+@app.route('/service-worker.js')
+def service_worker():
+    return send_file('static/service-worker.js', mimetype='application/javascript')
+
 @app.route('/share')
 def share():
     # دریافت URL از پارامترهای share

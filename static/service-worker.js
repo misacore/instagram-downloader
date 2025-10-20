@@ -1,7 +1,7 @@
-const CACHE_NAME = 'instagram-downloader-v1';
+const CACHE_NAME = 'instagram-downloader-v2';
 const urlsToCache = [
-  '/',
-  '/static/manifest.json'
+  '/app/',
+  '/app/static/manifest.json'
 ];
 
 // نصب Service Worker
@@ -27,10 +27,9 @@ self.addEventListener('activate', event => {
             return caches.delete(cacheName);
           }
         })
-      );
+      ).then(() => self.clients.claim());
     })
   );
-  self.clients.claim();
 });
 
 // درخواست‌های شبکه

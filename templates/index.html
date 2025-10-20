@@ -7,9 +7,9 @@
     
     <meta name="description" content="دانلود ویدیو و عکس از اینستاگرام">
     <meta name="theme-color" content="#E100FF">
-    <link rel="manifest" href="/static/manifest.json">
-    <link rel="icon" type="image/png" href="/static/icon-192.png">
-    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <link rel="manifest" href="./static/manifest.json">
+    <link rel="icon" type="image/png" href="./static/icon-192.png">
+    <link rel="apple-touch-icon" href="./static/icon-192.png">
     
     <style>
         @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
@@ -418,12 +418,12 @@
     </div>
 
     <div class="splash-screen" id="splashScreen">
-        <img src="/static/icon-512.png" alt="Logo" class="splash-logo">
+        <img src="./static/icon-512.png" alt="Logo" class="splash-logo">
         <div class="splash-text">دانلودکن</div>
     </div>
 
     <div class="container">
-        <img src="/static/icon-192.png" alt="Logo" class="logo">
+        <img src="./static/icon-192.png" alt="Logo" class="logo">
         <h1>دانلودکن</h1>
         <p class="subtitle">ویدیو و عکس اینستاگرام را با یک کلیک دانلود کنید</p>
 
@@ -463,6 +463,13 @@
     </div>
 
     <script>
+        // ثبت Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./service-worker.js')
+                .then(reg => console.log('Service Worker registered', reg))
+                .catch(err => console.log('Service Worker registration failed', err));
+        }
+
         let checkInterval;
         let deferredPrompt;
 
@@ -556,7 +563,7 @@
             const match = url.match(/\/(p|reel|tv)\/([A-Za-z0-9_-]+)/);
             if (match) {
                 // دریافت thumbnail از سرور
-                fetch('/thumbnail', {
+                fetch('./thumbnail', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url: url })
@@ -630,7 +637,7 @@
             downloadBtn.textContent = '⏳ در حال پردازش...';
             progressContainer.style.display = 'block';
 
-            fetch('/download', {
+            fetch('./download', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: url })
@@ -652,7 +659,7 @@
 
         function checkStatus(downloadId) {
             checkInterval = setInterval(() => {
-                fetch(`/status/${downloadId}`)
+                fetch(`./status/${downloadId}`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'downloading') {
@@ -684,7 +691,7 @@
             successMessage.style.display = 'block';
             successMessage.textContent = '✅ دانلود با موفقیت انجام شد!';
 
-            downloadButton.href = `/file/${filename}`;
+            downloadButton.href = `./file/${filename}`;
             resetButton();
         }
 
