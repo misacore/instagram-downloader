@@ -653,9 +653,9 @@
                 if (data.error) {
                     showError(data.error);
                     resetButton();
-                } else if (data.success && data.direct_url) {
-                    // نمایش لینک دانلود مستقیم
-                    showSuccessDirect(data.direct_url, data.filename);
+                } else if (data.success && data.download_id) {
+                    // نمایش لینک دانلود از طریق proxy
+                    showSuccessDirect(data.download_id, data.filename);
                 } else {
                     showError('خطا در استخراج لینک');
                     resetButton();
@@ -705,7 +705,7 @@
             resetButton();
         }
 
-        function showSuccessDirect(directUrl, filename) {
+        function showSuccessDirect(downloadId, filename) {
             const progressContainer = document.getElementById('progressContainer');
             const downloadLink = document.getElementById('downloadLink');
             const downloadButton = document.getElementById('downloadButton');
@@ -716,7 +716,8 @@
             successMessage.style.display = 'block';
             successMessage.textContent = '✅ آماده دانلود!';
 
-            downloadButton.href = directUrl;
+            // استفاده از proxy endpoint
+            downloadButton.href = `./proxy-download/${downloadId}`;
             downloadButton.download = filename;
             resetButton();
         }

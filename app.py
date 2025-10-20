@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file, jsonify, render_template
+from flask import Flask, request, send_file, jsonify, render_template, Response, stream_with_context
 import yt_dlp
 import os
 import uuid
@@ -6,6 +6,7 @@ import threading
 import time
 import subprocess
 import glob
+import requests
 
 app = Flask(__name__)
 
@@ -255,13 +256,55 @@ def get_direct_link():
             title = info.get('title', 'Instagram Media')
             ext = info.get('ext', 'mp4')
             
+            # Generate download ID for proxy
+            download_id = str(uuid.uuid4())
+            
+            # Store info temporarily
+            download_status[download_id] = {
+                'video_url': video_url,
+                'filename': f"{title}.{ext}",
+                'title': title
+            }
+            
             return jsonify({
                 'success': True,
-                'direct_url': video_url,
-                'title': title,
+                'download_id': download_id,
                 'filename': f"{title}.{ext}"
             })
             
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/proxy-download/<download_id>')
+def proxy_download(download_id):
+    """Stream download through server with proper headers"""
+    try:
+        if download_id not in download_status:
+            return jsonify({'error': 'Download not found'}), 404
+        
+        info = download_status[download_id]
+        video_url = info['video_url']
+        filename = info['filename']
+        
+        # Stream the file from Instagram
+        def generate():
+            with requests.get(video_url, stream=True, timeout=30) as r:
+                r.raise_for_status()
+                for chunk in r.iter_content(chunk_size=8192):
+                    if chunk:
+                        yield chunk
+        
+        # Clean up after download
+        download_status.pop(download_id, None)
+        
+        return Response(
+            stream_with_context(generate()),
+            headers={
+                'Content-Disposition': f'attachment; filename="{filename}"',
+                'Content-Type': 'video/mp4'
+            }
+        )
+        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
