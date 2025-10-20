@@ -80,6 +80,7 @@
   "lang": "fa",
   "dir": "rtl",
   "scope": "/app/",
+  "version": "2.0",
   "prefer_related_applications": false,
   "share_target": {
     "action": "/app/share",
