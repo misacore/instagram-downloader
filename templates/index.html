@@ -492,18 +492,21 @@
             return false;
         }
 
-        // نمایش بنر نصب فقط وقتی مرورگر پشتیبانی میکنه
+        // نمایش بنر نصب وقتی رویداد بیاد (بدون وابستگی به User-Agent)
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            
-            // فقط روی موبایل و اگه نصب نشده نمایش بده
-            if (/Mobi|Android/i.test(navigator.userAgent) && !checkIfInstalled()) {
-                // اگه کاربر قبلاً dismiss نکرده
-                if (!localStorage.getItem('installBannerDismissed')) {
-                    document.getElementById('installBanner').style.display = 'block';
-                }
+            console.log('beforeinstallprompt fired');
+            if (!checkIfInstalled() && !localStorage.getItem('installBannerDismissed')) {
+                document.getElementById('installBanner').style.display = 'block';
             }
+        });
+
+        // وقتی نصب شد، بنر را ببند
+        window.addEventListener('appinstalled', () => {
+            console.log('appinstalled');
+            document.getElementById('installBanner').style.display = 'none';
+            localStorage.removeItem('installBannerDismissed');
         });
 
         function installApp() {
