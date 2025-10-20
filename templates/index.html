@@ -685,6 +685,18 @@
         document.getElementById('url').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') startDownload();
         });
+
+        // بررسی لینک share شده هنگام بارگذاری صفحه
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlInput = document.getElementById('url');
+            const sharedUrl = urlInput.value.trim();
+            
+            // اگر لینکی از share اومده، پیش‌نمایش رو نمایش بده
+            if (sharedUrl && sharedUrl.includes('instagram.com')) {
+                console.log('Shared URL detected:', sharedUrl);
+                previewMedia();
+            }
+        });
     </script>
 </body>
 </html>
