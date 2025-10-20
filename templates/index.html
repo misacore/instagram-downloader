@@ -12,7 +12,12 @@
     <link rel="apple-touch-icon" href="./static/icon-192.png">
     
     <style>
-        @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+        /* Use system fonts as fallback for Iran without VPN */
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: local('Vazir'), local('Tahoma');
+            font-weight: normal;
+        }
         
         * {
             margin: 0;
