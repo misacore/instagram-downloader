@@ -620,6 +620,7 @@
             const downloadLink = document.getElementById('downloadLink');
             const errorMessage = document.getElementById('errorMessage');
             const successMessage = document.getElementById('successMessage');
+            const statusMessage = document.getElementById('statusMessage');
 
             errorMessage.style.display = 'none';
             successMessage.style.display = 'none';
@@ -639,8 +640,10 @@
             downloadBtn.disabled = true;
             downloadBtn.textContent = '⏳ در حال پردازش...';
             progressContainer.style.display = 'block';
+            statusMessage.textContent = 'در حال استخراج لینک...';
 
-            fetch('./download', {
+            // استفاده از روش سریع - لینک مستقیم
+            fetch('./get-direct-link', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: url })
@@ -650,8 +653,12 @@
                 if (data.error) {
                     showError(data.error);
                     resetButton();
+                } else if (data.success && data.direct_url) {
+                    // نمایش لینک دانلود مستقیم
+                    showSuccessDirect(data.direct_url, data.filename);
                 } else {
-                    checkStatus(data.download_id);
+                    showError('خطا در استخراج لینک');
+                    resetButton();
                 }
             })
             .catch(error => {
@@ -695,6 +702,22 @@
             successMessage.textContent = '✅ دانلود با موفقیت انجام شد!';
 
             downloadButton.href = `./file/${filename}`;
+            resetButton();
+        }
+
+        function showSuccessDirect(directUrl, filename) {
+            const progressContainer = document.getElementById('progressContainer');
+            const downloadLink = document.getElementById('downloadLink');
+            const downloadButton = document.getElementById('downloadButton');
+            const successMessage = document.getElementById('successMessage');
+
+            progressContainer.style.display = 'none';
+            downloadLink.style.display = 'block';
+            successMessage.style.display = 'block';
+            successMessage.textContent = '✅ آماده دانلود!';
+
+            downloadButton.href = directUrl;
+            downloadButton.download = filename;
             resetButton();
         }
 

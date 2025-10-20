@@ -219,6 +219,52 @@ def get_thumbnail():
 def health():
     return jsonify({'status': 'ok', 'message': 'Instagram Downloader API is running'})
 
+@app.route('/get-direct-link', methods=['POST'])
+def get_direct_link():
+    """Get direct download link without downloading to server"""
+    try:
+        data = request.get_json()
+        url = data.get('url', '').strip()
+        
+        if not url:
+            return jsonify({'error': 'Please provide URL'}), 400
+        
+        if 'instagram.com' not in url:
+            return jsonify({'error': 'Only Instagram URLs are supported'}), 400
+        
+        # Extract info without downloading
+        ydl_opts = {
+            'quiet': True,
+            'skip_download': True,
+            'no_warnings': True,
+            'extractor_args': {
+                'generic': {
+                    'impersonate': ['chrome']
+                }
+            },
+        }
+        
+        if os.path.exists('cookies.txt'):
+            ydl_opts['cookiefile'] = 'cookies.txt'
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            
+            # Get the best quality video URL
+            video_url = info.get('url')
+            title = info.get('title', 'Instagram Media')
+            ext = info.get('ext', 'mp4')
+            
+            return jsonify({
+                'success': True,
+                'direct_url': video_url,
+                'title': title,
+                'filename': f"{title}.{ext}"
+            })
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/download', methods=['POST'])
 def download():
     try:
