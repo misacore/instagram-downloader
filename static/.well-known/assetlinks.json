@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "ir.fastback.twa",
+    "sha256_cert_fingerprints": [
+      "67:DD:0A:96:09:27:D1:85:05:1B:EB:05:A4:E8:67:46:4A:47:90:B3:64:83:FD:B2:A2:1D:79:6D:1A:E5:20:B5"
+    ]
+  }
+}]
