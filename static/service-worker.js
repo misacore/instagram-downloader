@@ -1,33 +1,23 @@
-const CACHE_NAME = 'instagram-downloader-v2';
-const urlsToCache = [
-  '/app/',
-  '/app/static/manifest.json'
-];
+const CACHE_NAME = 'instagram-downloader-v3';
 
 // نصب Service Worker
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Cache opened');
-        return cache.addAll(urlsToCache);
-      })
-  );
+  console.log('Service Worker installing...');
   self.skipWaiting();
 });
 
 // فعال کردن Service Worker
 self.addEventListener('activate', event => {
+  console.log('Service Worker activating...');
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      ).then(() => self.clients.claim());
+        cacheNames.filter(cacheName => cacheName !== CACHE_NAME)
+          .map(cacheName => caches.delete(cacheName))
+      );
+    }).then(() => {
+      console.log('Service Worker activated');
+      return clients.claim();
     })
   );
 });
