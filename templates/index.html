@@ -305,6 +305,28 @@
             font-weight: 700;
         }
 
+        .apk-download {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .apk-download:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+
         .install-banner {
             background: linear-gradient(135deg, #00D084 0%, #00A868 100%);
             color: white;
@@ -390,6 +412,10 @@
 
     <div class="footer">
         ساخته شده با <span class="heart">♥</span> توسط <a href="https://instagram-downloader-vkjv.onrender.com" target="_blank">میثم اسماعیلی</a> • تقدیم به مادر زیبایم
+        <br>
+        <a href="./static/danloadkon.apk" class="apk-download" download>
+            📱 دانلود اپلیکیشن اندروید (APK)
+        </a>
     </div>
 
     <script>
