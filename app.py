@@ -123,51 +123,13 @@ def download_instagram_video(url, download_id):
                     
             except subprocess.TimeoutExpired:
                 shutil.rmtree(temp_folder, ignore_errors=True)
-                raise Exception("دانلود خیلی طول کشید - دوباره تلاش کنید")
+                raise Exception("⏱️ دانلود خیلی طول کشید - لطفاً دوباره تلاش کنید")
             except Exception as e:
                 shutil.rmtree(temp_folder, ignore_errors=True)
                 raise e
         
-        # Fallback: yt-dlp
-        output_path = os.path.join(DOWNLOAD_FOLDER, f"{download_id}.%(ext)s")
-        cookie_file = 'cookies.txt' if os.path.exists('cookies.txt') else None
-        
-        ydl_opts = {
-            'format': 'best',
-            'outtmpl': output_path,
-            'quiet': False,
-            'no_warnings': False,
-            'progress_hooks': [lambda d: progress_hook(d, download_id)],
-            'extractor_args': {
-                'generic': {
-                    'impersonate': ['chrome']
-                }
-            },
-            'referer': url,
-            'geo_bypass': True,
-            'check_certificate': False,
-        }
-        
-        if cookie_file:
-            ydl_opts['cookiefile'] = cookie_file
-        
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            
-            for file in os.listdir(DOWNLOAD_FOLDER):
-                if file.startswith(download_id) and not os.path.isdir(os.path.join(DOWNLOAD_FOLDER, file)):
-                    download_status[download_id] = {
-                        'status': 'completed',
-                        'progress': 100,
-                        'filename': file,
-                        'error': None,
-                        'title': info.get('title', 'Instagram Media'),
-                        'type': 'single'
-                    }
-                    return
-        
-        download_status[download_id]['status'] = 'error'
-        download_status[download_id]['error'] = 'File not found'
+        # No Instagram URL - not supported
+        raise Exception("❌ فقط لینک‌های اینستاگرام پشتیبانی می‌شوند")
         
     except Exception as e:
         download_status[download_id] = {
