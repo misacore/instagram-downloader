@@ -7,6 +7,8 @@ import time
 import subprocess
 import glob
 import requests
+import zipfile
+import shutil
 
 app = Flask(__name__)
 
@@ -33,6 +35,7 @@ cleanup_thread = threading.Thread(target=clean_old_files, daemon=True)
 cleanup_thread.start()
 
 def download_instagram_video(url, download_id):
+    """Download Instagram media (video, photo, story, carousel)"""
     try:
         download_status[download_id] = {
             'status': 'downloading',
@@ -41,30 +44,86 @@ def download_instagram_video(url, download_id):
             'error': None
         }
         
-        output_path = os.path.join(DOWNLOAD_FOLDER, f"{download_id}_%(title)s.%(ext)s")
+        # Use gallery-dl as primary for Instagram (best for photos/stories/carousel)
+        if 'instagram.com' in url:
+            try:
+                print(f"Using gallery-dl for Instagram: {url}")
+                
+                # Create temp folder
+                temp_folder = os.path.join(DOWNLOAD_FOLDER, download_id)
+                os.makedirs(temp_folder, exist_ok=True)
+                
+                # Build gallery-dl command
+                cmd = [
+                    'gallery-dl',
+                    '--dest', temp_folder,
+                    '--filename', '{filename}.{extension}',
+                ]
+                
+                if os.path.exists('cookies.txt'):
+                    cmd.extend(['--cookies', 'cookies.txt'])
+                
+                cmd.append(url)
+                
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+                
+                if result.returncode == 0:
+                    files = [f for f in os.listdir(temp_folder) if os.path.isfile(os.path.join(temp_folder, f))]
+                    
+                    if not files:
+                        raise Exception("No files downloaded")
+                    
+                    # Single file
+                    if len(files) == 1:
+                        source = os.path.join(temp_folder, files[0])
+                        ext = os.path.splitext(files[0])[1]
+                        final_name = f"{download_id}{ext}"
+                        dest = os.path.join(DOWNLOAD_FOLDER, final_name)
+                        shutil.move(source, dest)
+                        shutil.rmtree(temp_folder)
+                        
+                        download_status[download_id] = {
+                            'status': 'completed',
+                            'progress': 100,
+                            'filename': final_name,
+                            'error': None,
+                            'title': 'Instagram Media',
+                            'type': 'single'
+                        }
+                        return
+                    
+                    # Multiple files - create ZIP
+                    else:
+                        zip_name = f"{download_id}.zip"
+                        zip_path = os.path.join(DOWNLOAD_FOLDER, zip_name)
+                        
+                        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                            for file in files:
+                                file_path = os.path.join(temp_folder, file)
+                                zipf.write(file_path, file)
+                        
+                        shutil.rmtree(temp_folder)
+                        
+                        download_status[download_id] = {
+                            'status': 'completed',
+                            'progress': 100,
+                            'filename': zip_name,
+                            'error': None,
+                            'title': f'Instagram Album ({len(files)} files)',
+                            'type': 'multiple'
+                        }
+                        return
+                else:
+                    print(f"gallery-dl failed: {result.stderr}")
+                    raise Exception("gallery-dl failed")
+                    
+            except Exception as gallery_error:
+                print(f"gallery-dl error: {gallery_error}")
+                # Fallback to yt-dlp
+                pass
         
-        # Check if cookies file exists or create from hardcoded cookies
-        cookie_file = None
-        if not os.path.exists('cookies.txt'):
-            # Create cookies.txt with proper tab-separated format
-            cookies_content = """# Netscape HTTP Cookie File
-.instagram.com\tTRUE\t/\tTRUE\t1795082016\tdatr\tG2_vaD9tYtVx4SqkKJzzDf7z
-.instagram.com\tTRUE\t/\tTRUE\t1792058016\tig_did\t9BB8BF56-463E-4711-8023-82D1153067DB
-.instagram.com\tTRUE\t/\tTRUE\t1761135945\twd\t1444x810
-.instagram.com\tTRUE\t/\tTRUE\t1761135945\tdpr\t1.5625
-.instagram.com\tTRUE\t/\tTRUE\t1795090337\tmid\taO-PmQALAAGXneWYfU1Ia0VnmY6O
-.instagram.com\tTRUE\t/\tTRUE\t1792066347\tig_nrcb\t1
-.instagram.com\tTRUE\t/\tTRUE\t1795091132\tcsrftoken\tEVtrQdYv20xhB9dpQ2g1V4jLeZ7VyvuL
-.instagram.com\tTRUE\t/\tTRUE\t1768307132\tds_user_id\t8756404558
-.instagram.com\tTRUE\t/\tTRUE\t1792067114\tsessionid\t8756404558%3AUqZZ5S2dFGHSAm%3A4%3AAYhd4dwWJu8UNdgSlos_Ab827h7fZ-Mwo6TS5IPTgA
-.instagram.com\tTRUE\t/\tTRUE\t1795091123\tps_l\t1
-.instagram.com\tTRUE\t/\tTRUE\t1795091123\tps_n\t1
-.instagram.com\tTRUE\t/\tTRUE\t0\trur\t\"LDC\\0548756404558\\0541792067127:01fecd0c9e281a40218e69b8c1c8f1e9aedef7b3aa60dacc24733f4ddec6505fa34192a5\"
-"""
-            with open('cookies.txt', 'w') as f:
-                f.write(cookies_content)
-            print("Created cookies.txt file")
-        
+        # Fallback: yt-dlp
+        output_path = os.path.join(DOWNLOAD_FOLDER, f"{download_id}.%(ext)s")
         cookie_file = 'cookies.txt' if os.path.exists('cookies.txt') else None
         
         ydl_opts = {
@@ -83,64 +142,23 @@ def download_instagram_video(url, download_id):
             'check_certificate': False,
         }
         
-        # Add cookies if available
         if cookie_file:
             ydl_opts['cookiefile'] = cookie_file
-            print(f"Using cookies from {cookie_file}")
         
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
-                
-                for file in os.listdir(DOWNLOAD_FOLDER):
-                    if file.startswith(download_id):
-                        download_status[download_id] = {
-                            'status': 'completed',
-                            'progress': 100,
-                            'filename': file,
-                            'error': None,
-                            'title': info.get('title', 'Instagram Video')
-                        }
-                        return
-        except Exception as yt_error:
-            # Fallback to gallery-dl for Instagram
-            if 'instagram.com' in url:
-                print(f"yt-dlp failed, trying gallery-dl: {yt_error}")
-                try:
-                    gallery_output = os.path.join(DOWNLOAD_FOLDER, download_id)
-                    # Build gallery-dl command
-                    cmd = ['gallery-dl', '--dest', DOWNLOAD_FOLDER, '--filename', f'{download_id}_{{filename}}.{{extension}}']
-                    
-                    # Add cookies if available
-                    if os.path.exists('cookies.txt'):
-                        cmd.extend(['--cookies', 'cookies.txt'])
-                        print("Using cookies for gallery-dl")
-                    
-                    cmd.append(url)
-                    
-                    result = subprocess.run(
-                        cmd,
-                        capture_output=True,
-                        text=True,
-                        timeout=300
-                    )
-                    
-                    if result.returncode == 0:
-                        for file in os.listdir(DOWNLOAD_FOLDER):
-                            if file.startswith(download_id):
-                                download_status[download_id] = {
-                                    'status': 'completed',
-                                    'progress': 100,
-                                    'filename': file,
-                                    'error': None,
-                                    'title': 'Instagram Media'
-                                }
-                                return
-                    raise Exception(f"gallery-dl failed: {result.stderr}")
-                except Exception as gallery_error:
-                    raise Exception(f"Both yt-dlp and gallery-dl failed. yt-dlp: {yt_error}, gallery-dl: {gallery_error}")
-            else:
-                raise yt_error
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            
+            for file in os.listdir(DOWNLOAD_FOLDER):
+                if file.startswith(download_id) and not os.path.isdir(os.path.join(DOWNLOAD_FOLDER, file)):
+                    download_status[download_id] = {
+                        'status': 'completed',
+                        'progress': 100,
+                        'filename': file,
+                        'error': None,
+                        'title': info.get('title', 'Instagram Media'),
+                        'type': 'single'
+                    }
+                    return
         
         download_status[download_id]['status'] = 'error'
         download_status[download_id]['error'] = 'File not found'
@@ -286,6 +304,10 @@ def proxy_download(download_id):
         video_url = info['video_url']
         filename = info['filename']
         
+        # Determine content type
+        ext = os.path.splitext(filename)[1].lower()
+        content_type = 'video/mp4' if ext in ['.mp4', '.mov'] else 'image/jpeg' if ext in ['.jpg', '.jpeg'] else 'application/octet-stream'
+        
         # Stream the file from Instagram
         def generate():
             with requests.get(video_url, stream=True, timeout=30) as r:
@@ -301,7 +323,7 @@ def proxy_download(download_id):
             stream_with_context(generate()),
             headers={
                 'Content-Disposition': f'attachment; filename="{filename}"',
-                'Content-Type': 'video/mp4'
+                'Content-Type': content_type
             }
         )
         
