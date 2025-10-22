@@ -49,181 +49,60 @@ def download_instagram_video(url, download_id):
             raise Exception("❌ فقط لینک‌های اینستاگرام پشتیبانی می‌شوند")
         
         print(f"Downloading Instagram media: {url}")
-        temp_folder = os.path.join(DOWNLOAD_FOLDER, download_id)
-        os.makedirs(temp_folder, exist_ok=True)
         
-        # Try instaloader first (works better for stories/photos)
-        try:
-            import instaloader
-            print("Using instaloader for Instagram")
-            
-            L = instaloader.Instaloader(
-                download_videos=True,
-                download_video_thumbnails=False,
-                download_geotags=False,
-                download_comments=False,
-                save_metadata=False,
-                compress_json=False,
-                dirname_pattern=temp_folder,
-                filename_pattern='{filename}'
-            )
-            
-            # Load session from cookies if available
-            if os.path.exists('cookies.txt'):
-                print("Loading cookies for instaloader")
-                # Parse cookies.txt and login
-                try:
-                    with open('cookies.txt', 'r') as f:
-                        for line in f:
-                            if 'sessionid' in line:
-                                parts = line.strip().split('\t')
-                                if len(parts) >= 7:
-                                    sessionid = parts[6]
-                                    L.context._session.cookies.set('sessionid', sessionid, domain='.instagram.com')
-                                    break
-                except Exception as cookie_err:
-                    print(f"Cookie load error: {cookie_err}")
-            
-            # Extract shortcode from URL
-            shortcode_match = re.search(r'/(p|reel|tv|stories)/([A-Za-z0-9_-]+)', url)
-            if shortcode_match:
-                shortcode = shortcode_match.group(2)
-                post = instaloader.Post.from_shortcode(L.context, shortcode)
-                L.download_post(post, target=temp_folder)
-            else:
-                raise Exception("لینک نامعتبر است")
-            
-            # Check downloaded files
-            files = [f for f in os.listdir(temp_folder) if os.path.isfile(os.path.join(temp_folder, f)) and not f.endswith('.txt') and not f.endswith('.json')]
-            
-            if not files:
-                raise Exception("هیچ فایلی دانلود نشد")
-            
-            # Single file
-            if len(files) == 1:
-                source = os.path.join(temp_folder, files[0])
-                ext = os.path.splitext(files[0])[1]
-                final_name = f"{download_id}{ext}"
-                dest = os.path.join(DOWNLOAD_FOLDER, final_name)
-                shutil.move(source, dest)
-                shutil.rmtree(temp_folder)
-                
-                download_status[download_id] = {
-                    'status': 'completed',
-                    'progress': 100,
-                    'filename': final_name,
-                    'error': None,
-                    'title': 'Instagram Media',
-                    'type': 'single'
-                }
-                return
-            
-            # Multiple files - ZIP them
-            else:
-                zip_name = f"{download_id}.zip"
-                zip_path = os.path.join(DOWNLOAD_FOLDER, zip_name)
-                
-                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                    for file in files:
-                        file_path = os.path.join(temp_folder, file)
-                        zipf.write(file_path, file)
-                
-                shutil.rmtree(temp_folder)
-                
-                download_status[download_id] = {
-                    'status': 'completed',
-                    'progress': 100,
-                    'filename': zip_name,
-                    'error': None,
-                    'title': f'Instagram Album ({len(files)} files)',
-                    'type': 'multiple'
-                }
-                return
-                
-        except ImportError:
-            print("Instaloader not available, trying gallery-dl")
-            pass
-        except Exception as insta_err:
-            print(f"Instaloader failed: {insta_err}")
-            pass
+        # Use yt-dlp for everything - simpler and more reliable
+        output_template = os.path.join(DOWNLOAD_FOLDER, f"{download_id}.%(ext)s")
         
-        # Fallback to gallery-dl
-        print("Trying gallery-dl for Instagram")
-        cmd = ['gallery-dl', '--dest', temp_folder, '--filename', '{filename}.{extension}']
+        cookie_file = 'cookies.txt' if os.path.exists('cookies.txt') else None
         
-        if os.path.exists('cookies.txt'):
-            cmd.extend(['--cookies', 'cookies.txt'])
+        ydl_opts = {
+            'format': 'best',  # This will get video OR image, whatever is best
+            'outtmpl': output_template,
+            'quiet': False,
+            'no_warnings': False,
+            'writesubtitles': False,
+            'writethumbnail': False,
+            'progress_hooks': [lambda d: progress_hook(d, download_id)],
+        }
         
-        cmd.append(url)
+        if cookie_file:
+            ydl_opts['cookiefile'] = cookie_file
+            print(f"Using cookies from {cookie_file}")
+        else:
+            print("⚠️ No cookies - may fail for private content")
         
-        try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-            
-            if result.returncode != 0:
-                error_msg = result.stderr or result.stdout or "Unknown error"
-                print(f"gallery-dl error: {error_msg}")
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            try:
+                info = ydl.extract_info(url, download=True)
                 
-                # Check if command not found
-                if 'not found' in error_msg.lower() or 'not recognized' in error_msg.lower():
-                    raise Exception("🚫 ابزار دانلود نصب نیست - لطفاً به مدیر اطلاع دهید")
+                # Find downloaded file
+                downloaded_file = None
+                for file in os.listdir(DOWNLOAD_FOLDER):
+                    if file.startswith(download_id) and os.path.isfile(os.path.join(DOWNLOAD_FOLDER, file)):
+                        downloaded_file = file
+                        break
                 
-                raise Exception(f"❌ {error_msg[:150]}")
-            
-            files = [f for f in os.listdir(temp_folder) if os.path.isfile(os.path.join(temp_folder, f))]
-            
-            if not files:
-                raise Exception("🚫 دانلود نشد - کوکی منقضی شده یا محتوا خصوصی است")
-            
-            # Single file
-            if len(files) == 1:
-                source = os.path.join(temp_folder, files[0])
-                ext = os.path.splitext(files[0])[1]
-                final_name = f"{download_id}{ext}"
-                dest = os.path.join(DOWNLOAD_FOLDER, final_name)
-                shutil.move(source, dest)
-                shutil.rmtree(temp_folder)
-                
-                download_status[download_id] = {
-                    'status': 'completed',
-                    'progress': 100,
-                    'filename': final_name,
-                    'error': None,
-                    'title': 'Instagram Media',
-                    'type': 'single'
-                }
-                return
-            
-            # Multiple files
-            else:
-                zip_name = f"{download_id}.zip"
-                zip_path = os.path.join(DOWNLOAD_FOLDER, zip_name)
-                
-                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                    for file in files:
-                        file_path = os.path.join(temp_folder, file)
-                        zipf.write(file_path, file)
-                
-                shutil.rmtree(temp_folder)
-                
-                download_status[download_id] = {
-                    'status': 'completed',
-                    'progress': 100,
-                    'filename': zip_name,
-                    'error': None,
-                    'title': f'Instagram Album ({len(files)} files)',
-                    'type': 'multiple'
-                }
-                return
-                
-        except subprocess.TimeoutExpired:
-            shutil.rmtree(temp_folder, ignore_errors=True)
-            raise Exception("⏱️ دانلود خیلی طول کشید - دوباره تلاش کنید")
-        except FileNotFoundError:
-            shutil.rmtree(temp_folder, ignore_errors=True)
-            raise Exception("🚫 gallery-dl نصب نیست - لطفاً pip install gallery-dl رو اجرا کنید")
-        except Exception as e:
-            shutil.rmtree(temp_folder, ignore_errors=True)
-            raise e
+                if downloaded_file:
+                    download_status[download_id] = {
+                        'status': 'completed',
+                        'progress': 100,
+                        'filename': downloaded_file,
+                        'error': None,
+                        'title': info.get('title', 'Instagram Media'),
+                        'type': 'single'
+                    }
+                    return
+                else:
+                    raise Exception("🚫 فایل دانلود نشد")
+                    
+            except Exception as e:
+                error_str = str(e)
+                if 'No video formats found' in error_str or 'format' in error_str.lower():
+                    raise Exception("🚫 محتوا در دسترس نیست - کوکی منقضی شده یا محتوا خصوصی است")
+                elif 'login' in error_str.lower() or 'private' in error_str.lower():
+                    raise Exception("🔒 محتوا خصوصی است - لطفاً کوکی را تازه کنید")
+                else:
+                    raise Exception(f"❌ {error_str[:200]}")
         
     except Exception as e:
         download_status[download_id] = {
