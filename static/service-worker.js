@@ -1,4 +1,4 @@
-const CACHE_NAME = 'instagram-downloader-v1.2.1';
+const CACHE_NAME = 'instagram-downloader-v1.3.0';
 
 // نصب Service Worker
 self.addEventListener('install', event => {
