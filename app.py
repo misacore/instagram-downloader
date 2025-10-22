@@ -50,59 +50,151 @@ def download_instagram_video(url, download_id):
         
         print(f"Downloading Instagram media: {url}")
         
-        # Use yt-dlp for everything - simpler and more reliable
+        # Try instaloader first (best for photos, stories, and carousel)
+        try:
+            import instaloader
+            L = instaloader.Instaloader(
+                download_videos=True,
+                download_video_thumbnails=False,
+                download_geotags=False,
+                download_comments=False,
+                save_metadata=False,
+                compress_json=False,
+                quiet=True
+            )
+            
+            # Load cookies if available
+            if os.path.exists('cookies.txt'):
+                print("Loading session from cookies.txt")
+                try:
+                    with open('cookies.txt', 'r') as f:
+                        for line in f:
+                            if 'sessionid' in line:
+                                parts = line.strip().split('\t')
+                                if len(parts) >= 7:
+                                    sessionid = parts[6]
+                                    L.context._session.cookies.set('sessionid', sessionid, domain='.instagram.com')
+                                    print("✅ Session loaded")
+                                    break
+                except Exception as cookie_err:
+                    print(f"Cookie error: {cookie_err}")
+            
+            # Extract shortcode
+            shortcode_match = re.search(r'/(p|reel|tv|stories)/([A-Za-z0-9_-]+)', url)
+            if not shortcode_match:
+                raise Exception("❌ لینک نامعتبر - فرمت صحیح: instagram.com/p/SHORTCODE")
+            
+            shortcode = shortcode_match.group(2)
+            print(f"Downloading shortcode: {shortcode}")
+            
+            # Download to temp folder
+            temp_folder = os.path.join(DOWNLOAD_FOLDER, download_id)
+            os.makedirs(temp_folder, exist_ok=True)
+            
+            post = instaloader.Post.from_shortcode(L.context, shortcode)
+            L.download_post(post, target=temp_folder)
+            
+            # Find downloaded files (exclude metadata)
+            files = [
+                f for f in os.listdir(temp_folder) 
+                if os.path.isfile(os.path.join(temp_folder, f)) 
+                and not f.endswith('.txt') 
+                and not f.endswith('.json')
+                and not f.endswith('.xz')
+            ]
+            
+            if not files:
+                raise Exception("🚫 فایلی دانلود نشد")
+            
+            # Single file
+            if len(files) == 1:
+                source = os.path.join(temp_folder, files[0])
+                ext = os.path.splitext(files[0])[1]
+                final_name = f"{download_id}{ext}"
+                dest = os.path.join(DOWNLOAD_FOLDER, final_name)
+                shutil.move(source, dest)
+                shutil.rmtree(temp_folder)
+                
+                download_status[download_id] = {
+                    'status': 'completed',
+                    'progress': 100,
+                    'filename': final_name,
+                    'error': None,
+                    'title': 'Instagram Media',
+                    'type': 'single'
+                }
+                return
+            
+            # Multiple files - ZIP
+            else:
+                zip_name = f"{download_id}.zip"
+                zip_path = os.path.join(DOWNLOAD_FOLDER, zip_name)
+                
+                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                    for file in files:
+                        file_path = os.path.join(temp_folder, file)
+                        zipf.write(file_path, file)
+                
+                shutil.rmtree(temp_folder)
+                
+                download_status[download_id] = {
+                    'status': 'completed',
+                    'progress': 100,
+                    'filename': zip_name,
+                    'error': None,
+                    'title': f'Instagram Album ({len(files)} فایل)',
+                    'type': 'multiple'
+                }
+                return
+                
+        except ImportError:
+            print("⚠️ instaloader not installed, trying yt-dlp")
+        except Exception as insta_error:
+            error_str = str(insta_error)
+            print(f"Instaloader error: {error_str}")
+            
+            # If it's a known instaloader error, don't try yt-dlp
+            if 'login' in error_str.lower() or 'private' in error_str.lower():
+                raise Exception("🔒 محتوا خصوصی - کوکی رو تازه کنید")
+            elif 'فایلی' in error_str:
+                raise insta_error
+            # Otherwise try yt-dlp as fallback
+        
+        # Fallback: yt-dlp (better for videos)
+        print("Trying yt-dlp as fallback")
         output_template = os.path.join(DOWNLOAD_FOLDER, f"{download_id}.%(ext)s")
         
-        cookie_file = 'cookies.txt' if os.path.exists('cookies.txt') else None
-        
         ydl_opts = {
-            'format': 'best',  # This will get video OR image, whatever is best
+            'format': 'best',
             'outtmpl': output_template,
             'quiet': False,
             'no_warnings': False,
-            'writesubtitles': False,
-            'writethumbnail': False,
-            'progress_hooks': [lambda d: progress_hook(d, download_id)],
         }
         
-        if cookie_file:
-            ydl_opts['cookiefile'] = cookie_file
-            print(f"Using cookies from {cookie_file}")
-        else:
-            print("⚠️ No cookies - may fail for private content")
+        if os.path.exists('cookies.txt'):
+            ydl_opts['cookiefile'] = 'cookies.txt'
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            try:
-                info = ydl.extract_info(url, download=True)
-                
-                # Find downloaded file
-                downloaded_file = None
-                for file in os.listdir(DOWNLOAD_FOLDER):
-                    if file.startswith(download_id) and os.path.isfile(os.path.join(DOWNLOAD_FOLDER, file)):
-                        downloaded_file = file
-                        break
-                
-                if downloaded_file:
-                    download_status[download_id] = {
-                        'status': 'completed',
-                        'progress': 100,
-                        'filename': downloaded_file,
-                        'error': None,
-                        'title': info.get('title', 'Instagram Media'),
-                        'type': 'single'
-                    }
-                    return
-                else:
-                    raise Exception("🚫 فایل دانلود نشد")
-                    
-            except Exception as e:
-                error_str = str(e)
-                if 'No video formats found' in error_str or 'format' in error_str.lower():
-                    raise Exception("🚫 محتوا در دسترس نیست - کوکی منقضی شده یا محتوا خصوصی است")
-                elif 'login' in error_str.lower() or 'private' in error_str.lower():
-                    raise Exception("🔒 محتوا خصوصی است - لطفاً کوکی را تازه کنید")
-                else:
-                    raise Exception(f"❌ {error_str[:200]}")
+            info = ydl.extract_info(url, download=True)
+            
+            downloaded_file = None
+            for file in os.listdir(DOWNLOAD_FOLDER):
+                if file.startswith(download_id) and os.path.isfile(os.path.join(DOWNLOAD_FOLDER, file)):
+                    downloaded_file = file
+                    break
+            
+            if downloaded_file:
+                download_status[download_id] = {
+                    'status': 'completed',
+                    'progress': 100,
+                    'filename': downloaded_file,
+                    'error': None,
+                    'title': info.get('title', 'Instagram Media'),
+                    'type': 'single'
+                }
+                return
+            else:
+                raise Exception("🚫 دانلود نشد - کوکی رو بررسی کنید")
         
     except Exception as e:
         download_status[download_id] = {
