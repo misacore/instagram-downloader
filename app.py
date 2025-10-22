@@ -44,83 +44,89 @@ def download_instagram_video(url, download_id):
             'error': None
         }
         
-        # Use gallery-dl as primary for Instagram (best for photos/stories/carousel)
+        # ALWAYS use gallery-dl for Instagram (handles all types)
         if 'instagram.com' in url:
+            print(f"Using gallery-dl for Instagram: {url}")
+            
+            # Create temp folder
+            temp_folder = os.path.join(DOWNLOAD_FOLDER, download_id)
+            os.makedirs(temp_folder, exist_ok=True)
+            
+            # Build gallery-dl command
+            cmd = [
+                'gallery-dl',
+                '--dest', temp_folder,
+                '--filename', '{filename}.{extension}',
+            ]
+            
+            if os.path.exists('cookies.txt'):
+                cmd.extend(['--cookies', 'cookies.txt'])
+                print("Using cookies for gallery-dl")
+            else:
+                print("WARNING: No cookies.txt found - may fail for private content")
+            
+            cmd.append(url)
+            
             try:
-                print(f"Using gallery-dl for Instagram: {url}")
-                
-                # Create temp folder
-                temp_folder = os.path.join(DOWNLOAD_FOLDER, download_id)
-                os.makedirs(temp_folder, exist_ok=True)
-                
-                # Build gallery-dl command
-                cmd = [
-                    'gallery-dl',
-                    '--dest', temp_folder,
-                    '--filename', '{filename}.{extension}',
-                ]
-                
-                if os.path.exists('cookies.txt'):
-                    cmd.extend(['--cookies', 'cookies.txt'])
-                
-                cmd.append(url)
-                
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
                 
-                if result.returncode == 0:
-                    files = [f for f in os.listdir(temp_folder) if os.path.isfile(os.path.join(temp_folder, f))]
+                if result.returncode != 0:
+                    error_msg = result.stderr or result.stdout or "Unknown error"
+                    print(f"gallery-dl error output: {error_msg}")
+                    raise Exception(f"Failed to download: {error_msg[:200]}")
+                
+                files = [f for f in os.listdir(temp_folder) if os.path.isfile(os.path.join(temp_folder, f))]
+                
+                if not files:
+                    raise Exception("دانلود نشد - ممکن است کوکی منقضی شده باشد")
+                
+                # Single file
+                if len(files) == 1:
+                    source = os.path.join(temp_folder, files[0])
+                    ext = os.path.splitext(files[0])[1]
+                    final_name = f"{download_id}{ext}"
+                    dest = os.path.join(DOWNLOAD_FOLDER, final_name)
+                    shutil.move(source, dest)
+                    shutil.rmtree(temp_folder)
                     
-                    if not files:
-                        raise Exception("No files downloaded")
-                    
-                    # Single file
-                    if len(files) == 1:
-                        source = os.path.join(temp_folder, files[0])
-                        ext = os.path.splitext(files[0])[1]
-                        final_name = f"{download_id}{ext}"
-                        dest = os.path.join(DOWNLOAD_FOLDER, final_name)
-                        shutil.move(source, dest)
-                        shutil.rmtree(temp_folder)
-                        
-                        download_status[download_id] = {
-                            'status': 'completed',
-                            'progress': 100,
-                            'filename': final_name,
-                            'error': None,
-                            'title': 'Instagram Media',
-                            'type': 'single'
-                        }
-                        return
-                    
-                    # Multiple files - create ZIP
-                    else:
-                        zip_name = f"{download_id}.zip"
-                        zip_path = os.path.join(DOWNLOAD_FOLDER, zip_name)
-                        
-                        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                            for file in files:
-                                file_path = os.path.join(temp_folder, file)
-                                zipf.write(file_path, file)
-                        
-                        shutil.rmtree(temp_folder)
-                        
-                        download_status[download_id] = {
-                            'status': 'completed',
-                            'progress': 100,
-                            'filename': zip_name,
-                            'error': None,
-                            'title': f'Instagram Album ({len(files)} files)',
-                            'type': 'multiple'
-                        }
-                        return
+                    download_status[download_id] = {
+                        'status': 'completed',
+                        'progress': 100,
+                        'filename': final_name,
+                        'error': None,
+                        'title': 'Instagram Media',
+                        'type': 'single'
+                    }
+                    return
+                
+                # Multiple files - create ZIP
                 else:
-                    print(f"gallery-dl failed: {result.stderr}")
-                    raise Exception("gallery-dl failed")
+                    zip_name = f"{download_id}.zip"
+                    zip_path = os.path.join(DOWNLOAD_FOLDER, zip_name)
                     
-            except Exception as gallery_error:
-                print(f"gallery-dl error: {gallery_error}")
-                # Fallback to yt-dlp
-                pass
+                    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                        for file in files:
+                            file_path = os.path.join(temp_folder, file)
+                            zipf.write(file_path, file)
+                    
+                    shutil.rmtree(temp_folder)
+                    
+                    download_status[download_id] = {
+                        'status': 'completed',
+                        'progress': 100,
+                        'filename': zip_name,
+                        'error': None,
+                        'title': f'Instagram Album ({len(files)} files)',
+                        'type': 'multiple'
+                    }
+                    return
+                    
+            except subprocess.TimeoutExpired:
+                shutil.rmtree(temp_folder, ignore_errors=True)
+                raise Exception("دانلود خیلی طول کشید - دوباره تلاش کنید")
+            except Exception as e:
+                shutil.rmtree(temp_folder, ignore_errors=True)
+                raise e
         
         # Fallback: yt-dlp
         output_path = os.path.join(DOWNLOAD_FOLDER, f"{download_id}.%(ext)s")
